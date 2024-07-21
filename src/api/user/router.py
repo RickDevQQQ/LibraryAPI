@@ -74,9 +74,10 @@ async def put(session: SessionAnnotated, schema: PutUserSchema, user_id: int):
     '/{user_id}',
     summary="Удалить автора",
     status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"message": "Не найден пользователь"}
+    }
 )
 async def delete(session: SessionAnnotated, user_id: int):
     user_service = UserService(session)
     await user_service.delete(user_id)
-
-
