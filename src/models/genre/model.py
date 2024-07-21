@@ -5,7 +5,7 @@ from typing import List, TYPE_CHECKING
 
 from src.core.model import Model
 from src.core.column import ColumnIdAutoIncrement
-
+from src.models.genre.const import GENRE_FIELD_NAME_MAX_LENGTH
 
 if TYPE_CHECKING:
     from src.models.book.model import Book
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 class Genre(ColumnIdAutoIncrement, Model):
     name: Mapped[str] = mapped_column(
-        String(255), doc="Имя"
+        String(GENRE_FIELD_NAME_MAX_LENGTH), doc="Имя"
     )
     books: Mapped[List['Book']] = relationship(
         'Book',

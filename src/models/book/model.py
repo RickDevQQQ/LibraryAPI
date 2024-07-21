@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, List
 
 from src.core.column import ColumnIdAutoIncrement
 from src.core.model import Model
+from src.models.book.const import BOOK_FIELD_NAME_MAX_LENGTH
 
 if TYPE_CHECKING:
     from src.models.user.model import User
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 
 class Book(ColumnIdAutoIncrement, Model):
     name: Mapped[str] = mapped_column(
-        String(255), doc="Наименование"
+        String(BOOK_FIELD_NAME_MAX_LENGTH), doc="Наименование"
     )
     price: Mapped[Decimal] = mapped_column(
         DECIMAL(scale=2, precision=11, decimal_return_scale=2, asdecimal=True),
