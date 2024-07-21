@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from typing import TYPE_CHECKING, List
 
-from src.core.column import ColumnIdAutoIncrement
+from src.core.column import ColumnIdAutoIncrement, ColumnIsDeleted
 from src.core.model import Model
 from src.models.book.const import BOOK_FIELD_NAME_MAX_LENGTH
 
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from src.models.genre.model import Genre
 
 
-class Book(ColumnIdAutoIncrement, Model):
+class Book(ColumnIdAutoIncrement, ColumnIsDeleted, Model):
     name: Mapped[str] = mapped_column(
         String(BOOK_FIELD_NAME_MAX_LENGTH), doc="Наименование"
     )
@@ -26,16 +26,11 @@ class Book(ColumnIdAutoIncrement, Model):
         Integer, doc="Количество страниц"
     )
     author_id: Mapped[int] = mapped_column(
-        ForeignKey('author.id', use_alter=True, onupdate="RESTRICT", ondelete="RESTRICT"),
+        ForeignKey('user.id', use_alter=True, onupdate="RESTRICT", ondelete="RESTRICT"),
         doc="ИД автора"
     )
     author: Mapped['User'] = relationship('User')
-
-    genres: Mapped[List['Genre']] = relationship(
-        'Genre',
-        secondary='BookGenre',
-        back_populates='books'
-    )
+    genres: Mapped[List['BookGenre']] = relationship('BookGenre', back_populates='book')
 
 
 class BookGenre(Model):
@@ -47,3 +42,5 @@ class BookGenre(Model):
         ForeignKey('genre.id', use_alter=True, onupdate="RESTRICT", ondelete="RESTRICT"),
         primary_key=True, doc="ИД Жанра"
     )
+    book: Mapped['Book'] = relationship('Book', back_populates='genres')
+    genre: Mapped['Genre'] = relationship('Genre')

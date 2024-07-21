@@ -25,4 +25,11 @@ UserLastNameFieldAnnotated = Annotated[
         min_length=1
     )
 ]
+UserAvatarFieldAnnotated = Annotated[
+    str,
+    Field(
+        title="Аватарка",
+        min_length=1
+    )
+]
 

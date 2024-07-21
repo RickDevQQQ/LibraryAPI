@@ -5,15 +5,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 from typing import Annotated
 import datetime as dt
 
-IsDeletedAnnotated = Annotated[
-    Mapped[bool],
-    mapped_column(
-        Boolean,
-        default=False,
-        server_default=false(),
-        doc="Является удаленным"
-    )
-]
 CurrencyAnnotated = Annotated[
     Mapped[Decimal],
     mapped_column(
@@ -24,7 +15,12 @@ CurrencyAnnotated = Annotated[
 
 
 class ColumnIsDeleted:
-    is_deleted: IsDeletedAnnotated
+    is_deleted: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        server_default=false(),
+        doc="Является удаленным"
+    )
 
 
 class ColumnUpdatedAt:

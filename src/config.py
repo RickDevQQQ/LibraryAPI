@@ -11,7 +11,7 @@ class ApplicationConfig(BaseSettings):
 
     @property
     def default_asyncpg_url(self) -> str:
-        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+        return "postgresql+asyncpg://postgres:example@db/library"
 
 
 app_config = ApplicationConfig()

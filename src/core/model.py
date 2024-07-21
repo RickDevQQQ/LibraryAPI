@@ -86,9 +86,10 @@ class Model(AsyncAttrs, DeclarativeBase):
     async def update(
         cls,
         session: AsyncSession,
-        filters: List[bool],
+        filters: List[DBFilterType],
+        first: bool = False,
         **kwargs
-    ) -> List[Self]:
+    ) -> Union[List[Self] | Self]:
         query = (
             update(cls)
             .filter(*filters)
@@ -97,6 +98,8 @@ class Model(AsyncAttrs, DeclarativeBase):
             .execution_options(synchronize_session="fetch")
         )
         result = await session.execute(query)
+        if first:
+            return result.scalars().first()
         return list(result.scalars().all())
 
     @classmethod
