@@ -39,6 +39,6 @@ class ColumnCreatedAt:
 
 
 class ColumnIdAutoIncrement:
-    id: Mapped[BigInteger] = mapped_column(
+    id: Mapped[int] = mapped_column(
         Integer, primary_key=True, autoincrement=True, doc="ИД записи"
     )

@@ -1,4 +1,4 @@
-from sqlalchemy import MetaData, select, ColumnElement, update
+from sqlalchemy import MetaData, select, ColumnElement, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, declared_attr
 
@@ -94,13 +94,20 @@ class Model(AsyncAttrs, DeclarativeBase):
             update(cls)
             .filter(*filters)
             .values(**kwargs)
-            .returning(cls)
             .execution_options(synchronize_session="fetch")
         )
-        result = await session.execute(query)
-        if first:
-            return result.scalars().first()
-        return list(result.scalars().all())
+        await session.execute(query)
+        return await cls.get_models(session, filters=filters, first=first)
+
+    @classmethod
+    async def delete(
+        cls,
+        session: AsyncSession,
+        filters: List[DBFilterType],
+    ):
+        await session.execute(
+            delete(cls).filter(*filters).execution_options(synchronize_session="fetch")
+        )
 
     @classmethod
     def from_dict(cls, data: Dict) -> Self:

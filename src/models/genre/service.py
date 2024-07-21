@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,15 +14,25 @@ class GenreService:
         self.session = session
 
     async def genre_get_or_raise_by_id(self, genre_id: int) -> Genre:
-        genre = await Genre.get_models(self.session, filters=[
-            Genre.id == genre_id, Genre.is_deleted.is_(False)
-        ], first=True)
+        genre = await Genre.get_models(
+            self.session, filters=[
+                Genre.id == genre_id, Genre.is_deleted.is_(False)
+            ], first=True
+            )
         if not genre:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail={
                     'message': 'Не найден жанр'
                 }
             )
+        return genre
+
+    async def genre_get_by_ids(self, genre_ids: List[int]) -> List[Genre]:
+        genre = await Genre.get_models(
+            self.session, filters=[
+                Genre.id.in_(genre_ids), Genre.is_deleted.is_(False)
+            ]
+        )
         return genre
 
     async def create(self, schema: CreateGenreSchema) -> Genre:
