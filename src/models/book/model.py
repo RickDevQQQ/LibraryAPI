@@ -1,6 +1,7 @@
+from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import String, Integer, ForeignKey, DECIMAL
+from sqlalchemy import String, Integer, ForeignKey, DECIMAL, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from typing import TYPE_CHECKING, List
@@ -44,3 +45,19 @@ class BookGenre(Model):
     )
     book: Mapped['Book'] = relationship('Book', back_populates='genres')
     genre: Mapped['Genre'] = relationship('Genre')
+
+
+class BookReservation(ColumnIdAutoIncrement, Model):
+    book_id: Mapped[int] = mapped_column(
+        ForeignKey('book.id', use_alter=True, onupdate="RESTRICT", ondelete="RESTRICT"),
+        doc="ИД книги"
+    )
+    start_datetime: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default='Время начала брони'
+    )
+    end_datetime: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default='Время окончания брони'
+    )
+
+
+

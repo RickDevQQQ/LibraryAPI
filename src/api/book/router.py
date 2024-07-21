@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, status
 
 from src.core.database import SessionAnnotated
-from src.models.book.schema import GetBookSchema, CreateBookSchema, PutBookSchema
+from src.models.book.schema import GetBookSchema, CreateBookSchema, PutBookSchema, Reservation
 from src.models.book.service import BookService
 from src.models.book.mapper import BookMapper
 from src.models.genre.service import GenreService
@@ -28,7 +28,7 @@ async def create(session: SessionAnnotated, schema: CreateBookSchema):
         UserService(session)
     )
     book, genres = await book_service.create(schema)
-    return BookMapper.from_model_to_schema(book, genres)
+    return BookMapper.from_model_to_schema(book, genres, None)
 
 
 @book_router.get(
@@ -44,16 +44,22 @@ async def get_all(
         GenreService(session),
         UserService(session)
     )
-    return [
-        BookMapper.from_model_to_schema(book, genres)
-        for book, genres in await book_service.get_all()
-    ]
+    response = []
+    for book, genres in await book_service.get_all():
+        reservation = await book_service.get_active_reservation(book.id)
+        response.append(
+            BookMapper.from_model_to_schema(book, genres, reservation)
+        )
+    return response
 
 
 @book_router.get(
     '/{book_id}',
     summary="Получить кингу",
-    response_model=GetBookSchema
+    response_model=GetBookSchema,
+    responses={
+        status.HTTP_404_NOT_FOUND: {'message': 'Не найдена книга'}
+    }
 )
 async def get(
     session: SessionAnnotated,
@@ -65,12 +71,16 @@ async def get(
         UserService(session)
     )
     book, genres = await book_service.book_get_or_raise_by_id(book_id)
-    return BookMapper.from_model_to_schema(book, genres)
+    reservation = await book_service.get_active_reservation(book.id)
+    return BookMapper.from_model_to_schema(book, genres, reservation)
 
 
 @book_router.put(
     '/{book_id}',
-    summary="Изменить книгу"
+    summary="Изменить книгу",
+    responses={
+        status.HTTP_404_NOT_FOUND: {'message': 'Не найдена книга'}
+    }
 )
 async def put(
     session: SessionAnnotated,
@@ -83,12 +93,16 @@ async def put(
         UserService(session)
     )
     book, genres = await book_service.put(book_id, schema)
-    return BookMapper.from_model_to_schema(book, genres)
+    reservation = await book_service.get_active_reservation(book.id)
+    return BookMapper.from_model_to_schema(book, genres, reservation)
 
 
 @book_router.delete(
     '/{book_id}',
-    summary="Удалить книгу"
+    summary="Удалить книгу",
+    responses={
+        status.HTTP_404_NOT_FOUND: {'message': 'Не найдена книга'}
+    }
 )
 async def delete(session: SessionAnnotated, book_id: int):
     book_service = BookService(
@@ -97,3 +111,30 @@ async def delete(session: SessionAnnotated, book_id: int):
         UserService(session)
     )
     await book_service.delete(book_id)
+
+
+@book_router.post(
+    '/{book_id}/add-reservation',
+    summary="Забронировать",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_404_NOT_FOUND: {'message': 'Не найдена книга'},
+        status.HTTP_400_BAD_REQUEST: {
+            'message': 'На книгу уже есть бронь в этот период. '
+                       'Книга забронирована c {reservation.start_datetime} по {reservation.end_datetime}'
+        }
+    }
+)
+async def add_reservation(
+    session: SessionAnnotated,
+    schema: Reservation,
+    book_id: int
+):
+    book_service = BookService(
+        session,
+        GenreService(session),
+        UserService(session)
+    )
+    await book_service.add_reservation(
+        book_id, start_datetime=schema.start_datetime, end_datetime=schema.end_datetime
+    )

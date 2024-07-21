@@ -1,4 +1,5 @@
-from typing import List
+from datetime import datetime
+from typing import List, Optional
 
 from pydantic import BaseModel
 from src.models.book.field import (
@@ -30,6 +31,11 @@ class PutBookSchema(CreateBookSchema):
     pass
 
 
+class Reservation(BaseModel):
+    start_datetime: datetime
+    end_datetime: datetime
+
+
 class GetBookSchema(BaseModel):
     id: BookIdFieldAnnotated
     name: BookNameFieldAnnotated
@@ -37,3 +43,4 @@ class GetBookSchema(BaseModel):
     price: BookPriceFieldAnnotated
     author: GetUserSchema
     genres: List[GetGenreSchema]
+    reservation: Optional[Reservation]

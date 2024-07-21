@@ -1,4 +1,5 @@
-from typing import List, Tuple
+from datetime import datetime
+from typing import List, Tuple, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,6 +7,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import selectinload
 
 from src.models import Book, Genre, BookGenre
+from src.models.book.model import BookReservation
 from src.models.book.schema import CreateBookSchema, PutBookSchema, GenreId
 from src.models.genre.service import GenreService
 from src.models.user.service import UserService
@@ -23,6 +25,50 @@ class BookService:
         self.genre_service = genre_service
         self.user_service = user_service
 
+    async def check_reservation(
+        self,
+        book_id: int,
+        start_datetime: datetime,
+        end_datetime: datetime
+    ) -> Optional[BookReservation]:
+        return await BookReservation.get_models(
+            self.session,
+            filters=[  # type: ignore
+                BookReservation.book_id == book_id,
+                BookReservation.start_datetime < end_datetime,
+                BookReservation.end_datetime > start_datetime
+            ],
+            first=True
+        )
+
+    async def get_active_reservation(self, book_id: int) -> Optional[BookReservation]:
+        return await BookReservation.get_models(
+            self.session,
+            filters=[
+                BookReservation.id == book_id
+            ],
+            order_by=BookReservation.end_datetime.desc(),
+            first=True
+        )
+
+    async def add_reservation(self, book_id: int, start_datetime: datetime, end_datetime: datetime) -> None:
+        book, genre = await self.book_get_or_raise_by_id(book_id)
+        reservation = await self.check_reservation(book.id, start_datetime, end_datetime)
+        if reservation:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail={
+                    'message': (
+                        'На книгу уже есть бронь в этот период. '
+                        f'Книга забронирована c {reservation.start_datetime} по {reservation.end_datetime}'
+                    )
+                }
+            )
+        reservation = BookReservation(
+            book_id=book_id, start_datetime=start_datetime, end_datetime=end_datetime
+        )
+        self.session.add(reservation)
+        await self.session.commit()
+
     async def book_get_or_raise_by_id(self, book_id: int) -> Tuple[Book, List[Genre]]:
         book = await Book.get_models(
             self.session, filters=[
@@ -36,13 +82,13 @@ class BookService:
             ],
             first=True
         )
-        genres = [item.genre for item in book.genres]
         if not book:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail={
                     'message': 'Не найдена книга'
                 }
             )
+        genres = [item.genre for item in book.genres]
         return book, genres
 
     async def get_genres(self, book_id: int) -> List[Genre]:
