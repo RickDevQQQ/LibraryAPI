@@ -43,4 +43,4 @@ class GetBookSchema(BaseModel):
     price: BookPriceFieldAnnotated
     author: GetUserSchema
     genres: List[GetGenreSchema]
-    reservation: Optional[Reservation]
+    reservation: List[Reservation]

@@ -47,6 +47,7 @@ async def get_all(
     response = []
     for book, genres in await book_service.get_all():
         reservation = await book_service.get_active_reservation(book.id)
+        print(reservation)
         response.append(
             BookMapper.from_model_to_schema(book, genres, reservation)
         )

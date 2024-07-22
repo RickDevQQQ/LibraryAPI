@@ -42,7 +42,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = 'postgresql+asyncpg://postgres:example@localhost:5433/libraryProd'
     context.configure(
         url=url,
         target_metadata=target_metadata,

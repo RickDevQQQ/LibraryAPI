@@ -10,7 +10,7 @@ from src.models.user.mapper import UserMapper
 class BookMapper:
 
     @staticmethod
-    def from_model_to_schema(model: Book, genres: List[Genre], reservation: Optional[BookReservation]) -> GetBookSchema:
+    def from_model_to_schema(model: Book, genres: List[Genre], reservation: List[BookReservation]) -> GetBookSchema:
         return GetBookSchema(
             id=model.id,
             name=model.name,
@@ -21,9 +21,12 @@ class BookMapper:
                 GenreMapper.from_model_to_schema(genre)
                 for genre in genres
             ],
-            reservation=Reservation(
-                start_datetime=reservation.start_datetime,
-                end_datetime=reservation.end_datetime
-            ) if reservation else None
+            reservation=[
+                Reservation(
+                    start_datetime=item.start_datetime,
+                    end_datetime=item.end_datetime
+                )
+                for item in reservation
+            ]
 
         )

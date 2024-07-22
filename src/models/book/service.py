@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC, timezone
 from typing import List, Tuple, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -41,14 +41,15 @@ class BookService:
             first=True
         )
 
-    async def get_active_reservation(self, book_id: int) -> Optional[BookReservation]:
+    async def get_active_reservation(self, book_id: int) -> List[BookReservation]:
+        now = datetime.now()
         return await BookReservation.get_models(
             self.session,
             filters=[
-                BookReservation.id == book_id
+                BookReservation.book_id == book_id,
+                BookReservation.end_datetime > now
             ],
-            order_by=BookReservation.end_datetime.desc(),
-            first=True
+            order_by=BookReservation.end_datetime.desc()
         )
 
     async def add_reservation(self, book_id: int, start_datetime: datetime, end_datetime: datetime) -> None:
